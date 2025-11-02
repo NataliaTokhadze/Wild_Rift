@@ -1,98 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Wild Rift Champions Search</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      padding: 20px;
-    }
-    input {
-      padding: 10px;
-      width: 300px;
-      font-size: 16px;
-      margin-bottom: 20px;
-    }
-    .champion-card {
-      background-color: #fff;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .champion-card h2 {
-      margin: 0 0 5px 0;
-    }
-    .champion-card p {
-      margin: 5px 0;
-    }
-    .champion-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    .champion-list span {
-      background: #ddd;
-      padding: 5px 8px;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-  </style>
-</head>
-<body>
-
-<h1>Wild Rift Champions Search</h1>
-<input type="text" id="searchInput" placeholder="Введите имя чемпиона..." />
-
-<div id="results"></div>
-
-<script>
-  const input = document.getElementById("searchInput");
-  const resultsDiv = document.getElementById("results");
-
-  input.addEventListener("input", function() {
-    const query = input.value.trim();
-    if (!query) {
-      resultsDiv.innerHTML = "";
-      return;
-    }
-
-    fetch(`/search/?q=${encodeURIComponent(query)}`)
-      .then(res => res.json())
-      .then(data => {
-        resultsDiv.innerHTML = "";
-        if (!data.length) {
-          resultsDiv.innerHTML = "<p>Ничего не найдено</p>";
-          return;
+    <meta charset="UTF-8">
+    <title>Wild Rift Champions Search</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            margin: 0;
         }
 
-        data.forEach(champ => {
-          const card = document.createElement("div");
-          card.className = "champion-card";
+        h1 {
+            margin-bottom: 30px;
+            font-weight: 400;
+            font-size: 32px;
+        }
 
-          const strongHTML = champ.strong_against.map(c => `<span>${c}</span>`).join(" ");
-          const weakHTML = champ.weak_against.map(c => `<span>${c}</span>`).join(" ");
+        #search {
+            width: 100%;
+            max-width: 450px;
+            padding: 14px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            background-color: #1f1f1f;
+            color: #fff;
+            margin-bottom: 25px;
+            transition: background 0.3s;
+        }
 
-          card.innerHTML = `
-            <h2>${champ.name}</h2>
-            <p><strong>Роль:</strong> ${champ.role || "Не указана"}</p>
-            <p><strong>Сильнее против:</strong></p>
-            <div class="champion-list">${strongHTML || "-"}</div>
-            <p><strong>Слабее против:</strong></p>
-            <div class="champion-list">${weakHTML || "-"}</div>
-          `;
+        #search:focus {
+            background-color: #2a2a2a;
+        }
 
-          resultsDiv.appendChild(card);
+        #results {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .champion {
+            padding: 16px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #1b1b1b, #222222);
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s;
+        }
+
+        .champion.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .champion:hover {
+            background: linear-gradient(135deg, #272727, #1f1f1f);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+        }
+
+        .champion h2 {
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .champion p {
+            margin: 4px 0;
+            font-size: 15px;
+            color: #ccc;
+        }
+
+        /* Цвета по роли (можно потом расширить) */
+        .role-ADC { color: #f97316; }   /* orange */
+        .role-Mage { color: #3b82f6; }  /* blue */
+        .role-Support { color: #10b981; } /* green */
+        .role-Tank { color: #f59e0b; }   /* yellow */
+        .role-Fighter { color: #ef4444; } /* red */
+        .role-Assassin { color: #8b5cf6; } /* purple */
+
+        .error {
+            color: #ff4d4d;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .empty {
+            text-align: center;
+            color: #888;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wild Rift Champions</h1>
+
+    <input id="search" placeholder="Search champions..." autocomplete="off" />
+    <div id="results"></div>
+
+    <script>
+        const input = document.getElementById('search');
+        const resultsDiv = document.getElementById('results');
+
+        input.addEventListener('input', async () => {
+            const query = input.value.trim();
+            resultsDiv.innerHTML = '';
+
+            if (!query) return;
+
+            try {
+                const res = await fetch(`/search/?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+                    return;
+                }
+
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = `<p class="empty">No champions found</p>`;
+                    return;
+                }
+
+                data.forEach(champ => {
+                    const div = document.createElement('div');
+                    div.className = 'champion';
+                    const roleClass = champ.role ? `role-${champ.role.replace(/\s+/g,'')}` : '';
+                    div.innerHTML = `
+                        <h2>${champ.name} <span class="${roleClass}">(${champ.role || '—'})</span></h2>
+                        <p><strong>Strong Against:</strong> ${champ.strong_against.join(', ') || '—'}</p>
+                        <p><strong>Weak Against:</strong> ${champ.weak_against.join(', ') || '—'}</p>
+                    `;
+                    resultsDiv.appendChild(div);
+                    setTimeout(() => div.classList.add('visible'), 10);
+                });
+            } catch (err) {
+                resultsDiv.innerHTML = `<p class="error">Error fetching champions</p>`;
+                console.error(err);
+            }
         });
-      })
-      .catch(err => {
-        console.error(err);
-        resultsDiv.innerHTML = "<p>Ошибка при поиске</p>";
-      });
-  });
-</script>
-
+    </script>
 </body>
 </html>

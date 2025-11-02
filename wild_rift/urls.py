@@ -15,14 +15,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from champions import views  # импортируем view
+from django.urls import path, include
+from champions.views import search_champions, champion_search_page
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.champion_search_page, name='home'),  # главная страница '/'
-    path('champions/search/', views.search_champions, name='search_champions'),  # API поиска
+    path('', champion_search_page, name='champion_search_page'),
+    path('search/', search_champions, name='search_champions'),
 ]
-
-
-

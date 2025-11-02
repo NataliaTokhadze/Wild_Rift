@@ -7,7 +7,7 @@ from django.shortcuts import render
 @csrf_exempt
 def search_champions(request):
     query = request.GET.get("q", "")
-    champions = Champion.objects.filter(name__icontains=query)[:10]  # максимум 10 результатов
+    champions = Champion.objects.filter(name__icontains=query)[:10]
     results = []
 
     for champ in champions:
